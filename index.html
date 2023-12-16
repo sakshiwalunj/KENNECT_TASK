@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart with Sorting Algorithms</title>
+    <style>
+        .widthheight input {
+            margin-right: 10px;
+        }
+
+        .widthheight {
+        position: fixed;
+        bottom: 10px;
+        left: 10px;
+        z-index: 1; /* Ensure it appears above the chart container */
+        
+    }
+
+        .chart-container {
+            position: relative;
+        }
+
+        h3,h2 {
+            background-color: green;
+            color: yellow;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Comparison Sorting Algorithms</h2>
+    <div class="buttons">
+        <button type="button" onclick="randomizeData()">Randomize</button>
+        
+        <button type="button" onclick="insertionSort()">Insertion Sort</button>
+        <button type="button" onclick="selectionSort()">selection Sort</button>
+        <button type="button" onclick="bubbleSort()">bubble Sort</button>
+        <button type="button" onclick="startQuickSort()">quick Sort</button>
+        <button type="button" onclick="startMergeSort()">merge Sort</button>
+        <button type="button" onclick="startShellSort()">shell Sort</button>
+    </div>
+    <div class="chart-container">
+        <canvas id="myChart"></canvas>
+    </div>
+   
+
+    <div class="widthheight">
+        <div class="animation-message" id="animationMessage"></div>
+
+        <div>
+            <button type="button" onclick="togglePause()">Pause</button>
+            <input type="range" id="speedRange" min="1" max="50" value="10" onchange="updateAnimationSpeed()">
+            <input type="text" id="widthInput" placeholder="Width">
+            <input type="text" id="heightInput" placeholder="Height">
+            <button type="button" onclick="changeCanvasSize()">Change Canvas Size</button><br>
+            <label for="speedRange">Animation Speed:</label>
+        </div>
+        <h3 style="width: 1600px;">Algorithms Visualizations</h3>
+    </div>
+
+    <!-- <div class="speed-control">
+        
+    </div> -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        let myChart; // Declare myChart outside the functions
+        let arr = [];
+        let userWidth = 600;
+        let userHeight = 600;
+        let animationSpeed = 10; // Default speed
+
+        randomizeData();
+
+        function createChart() {
+            // Destroy the existing chart instance if it exists
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            const ctx = document.getElementById('myChart').getContext('2d');
+
+            return new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'range of numbers',
+                        data: [],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    animation: {
+                        duration: 1000 / animationSpeed, // Set animation duration based on speed
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                },
+                plugins: [{
+                    beforeInit: (chart) => {
+                        chart.canvas.parentNode.style.width = userWidth + 'px';
+                        chart.canvas.parentNode.style.height = userHeight + 'px';
+                        
+                    }
+                }]
+            });
+        }
+
+        function updateChart() {
+            // Update the existing chart instance
+            myChart.data.labels = arr;
+            myChart.data.datasets[0].data = arr;
+            myChart.update();
+        }
+
+        function randomizeData() {
+            arr = Array.from({ length: 16 }, () => Math.floor(Math.random() * 100) + 1);
+            myChart = createChart(); // Create the initial chart instance
+            updateChart();
+        }
+        let pauseAnimation = false;
+
+        function togglePause() {
+            pauseAnimation = !pauseAnimation;
+            if (pauseAnimation) {
+                // If animation is paused, disable the speed range input
+                document.getElementById('speedRange').disabled = true;
+            } else {
+                // If animation is resumed, enable the speed range input
+                document.getElementById('speedRange').disabled = false;
+            }
+        }
+
+        function changeCanvasSize() {
+            const widthInput = document.getElementById('widthInput').value;
+            const heightInput = document.getElementById('heightInput').value;
+            console.log(document.getElementsByClassName("chart-container"));
+            
+            // Check if both width and height are provided and are valid numbers
+            if (widthInput && heightInput && !isNaN(widthInput) && !isNaN(heightInput)) {
+                // Update user-specified width and height
+                userWidth = parseInt(widthInput);
+                userHeight = parseInt(heightInput);
+                document.getElementsByClassName("chart-container")[0].style.height = userHeight;
+                document.getElementsByClassName("chart-container")[0].style.width = userWidth;
+                // Destroy the existing chart
+                myChart.destroy();
+
+                // Create a new chart with the updated size
+                myChart = createChart();
+                updateChart();
+            } else {
+                alert('Please provide valid values for width and height.');
+            }
+        }
+
+        function updateAnimationSpeed() {
+            const speedRange = document.getElementById('speedRange');
+            animationSpeed = parseInt(speedRange.value);
+
+            // Update animation speed
+            myChart.options.animation.duration = 70000 / animationSpeed;
+            myChart.update();
+            
+        }
+        function checkAnimationCompletion(callback) {
+            const messageDiv = document.getElementById('animationMessage');
+            const checkInterval = 100; // Check interval in milliseconds
+
+            const checkIntervalId = setInterval(() => {
+                if (!myChart.animating) {
+                    // Animation has completed
+                    clearInterval(checkIntervalId); // Stop checking
+                    callback(); // Execute the callback function
+                }
+            }, checkInterval);
+        }
+
+        function showAnimationMessage() {
+            const messageDiv = document.getElementById('animationMessage');
+            messageDiv.innerText = 'Animation Completed';
+            messageDiv.style.display = 'block';
+                    setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 2000);
+        }
+                    
+
+        function insertionSort() {
+            let n = arr.length;
+
+            for (let i = 1; i < n; i++) {
+                let key = arr[i];
+                let j = i - 1;
+
+                while (j >= 0 && arr[j] > key) {
+                    arr[j + 1] = arr[j];
+                    j = j - 1;
+                }
+                arr[j + 1] = key;
+                updateChart();
+                showAnimationMessage();
+            }
+        }
+
+        function selectionSort()
+        {
+            let n = arr.length;
+
+            for (let i = 0; i < n - 1; i++) {
+                let minIndex = i;
+
+                for (let j = i + 1; j < n; j++) {
+                    if (arr[j] < arr[minIndex]) 
+                    {
+                        minIndex = j;
+                    }
+                 }
+
+                let temp = arr[minIndex];
+                arr[minIndex] = arr[i];
+                arr[i] = temp;
+
+            
+                updateChart();
+                showAnimationMessage();
+            }
+        }
+        function bubbleSort(){
+            let n = arr.length;
+
+            for (let i = 0; i < n - 1; i++) {
+                for (let j = 0; j < n - i - 1; j++) {
+                    // Swap if the element found is greater than the next element
+                    if (arr[j] > arr[j + 1]) {
+                        let temp = arr[j];
+                        arr[j] = arr[j + 1];
+                        arr[j + 1] = temp;
+
+                        // Update the chart after each swap
+                        updateChart();
+                        showAnimationMessage();
+                    }
+                }
+            }
+
+        }
+        async function startQuickSort() {
+            // Initial chart setup
+            updateChart(-1, -1, -1);
+
+            // Call the async quickSort function
+            await quickSort(0, arr.length - 1);
+
+            // Update the chart after the sorting is complete
+            updateChart(-1, -1, -1);
+            await sleep(500);
+            showAnimationMessage();
+        }
+
+        async function quickSort(low, high) {
+            if (low < high) {
+                let pivotIndex = await partition(low, high);
+                await quickSort(low, pivotIndex - 1);
+                await quickSort(pivotIndex + 1, high);
+            }
+        }
+
+        async function partition(low, high) {
+            let pivot = arr[high];
+            let i = low - 1;
+
+            for (let j = low; j < high; j++) {
+                if (arr[j] < pivot) {
+                    i++;
+                    let temp = arr[i];
+                    arr[i] = arr[j];
+                    arr[j] = temp;
+                    updateChart(j, low, high);
+                    await sleep(animationSpeed); 
+                }
+            }
+
+            let temp = arr[i + 1];
+            arr[i + 1] = arr[high];
+            arr[high] = temp;
+            updateChart(i + 1, low, high);
+            await sleep(animationSpeed); 
+
+            return i + 1;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+            
+        }
+
+        async function startMergeSort() {
+            // Initial chart setup
+            updateChart(-1, -1, -1);
+
+            // Call the async mergeSort function
+            await mergeSort(0, arr.length - 1);
+
+            // Update the chart after the sorting is complete
+            updateChart(-1, -1, -1);
+            await sleep(500);
+            showAnimationMessage();
+        }
+
+        async function mergeSort(low, high) {
+            if (low < high) {
+                const mid = Math.floor((low + high) / 2);
+
+                // Recursively sort the left and right halves
+                await mergeSort(low, mid);
+                await mergeSort(mid + 1, high);
+
+                // Merge the sorted halves
+                await merge(low, mid, high);
+            }
+        }
+
+        async function merge(low, mid, high) {
+            const left = arr.slice(low, mid + 1);
+            const right = arr.slice(mid + 1, high + 1);
+
+            let i = 0, j = 0, k = low;
+
+            while (i < left.length && j < right.length) {
+                if (left[i] <= right[j]) {
+                    arr[k] = left[i];
+                    i++;
+                } else {
+                    arr[k] = right[j];
+                    j++;
+                }
+
+                updateChart(k, low, high);
+                await sleep(animationSpeed);
+                k++;
+            }
+
+            while (i < left.length) {
+                arr[k] = left[i];
+                updateChart(k, low, high);
+                await sleep(animationSpeed);
+                i++;
+                k++;
+            }
+
+            while (j < right.length) {
+                arr[k] = right[j];
+                updateChart(k, low, high);
+                await sleep(animationSpeed);
+                j++;
+                k++;
+            }
+        }
+
+        // Existing sleep function
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+            
+        }
+
+
+        async function startShellSort() {
+            // Initial chart setup
+            updateChart(-1, -1, -1);
+
+            // Define the sequence of gaps for Shell Sort
+            const gaps = [701, 301, 132, 57, 23, 10, 4, 1];
+
+            // Iterate through each gap and perform insertion sort
+            for (let gap of gaps) {
+                for (let i = gap; i < arr.length; i++) {
+                    let temp = arr[i];
+                    let j = i;
+
+                    // Move elements at intervals of gap
+                    while (j >= gap && arr[j - gap] > temp) {
+                        arr[j] = arr[j - gap];
+                        updateChart(j, -1, -1);
+                        await sleep(animationSpeed);
+                        j -= gap;
+                    }
+
+                    arr[j] = temp;
+                    updateChart(j, -1, -1);
+                    await sleep(animationSpeed);
+                }
+            }
+
+            // Update the chart after the sorting is complete
+            updateChart(-1, -1, -1);
+            showAnimationMessage();
+        }
+
+        // Existing sleep function
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+            
+        }
+    </script>
+
+</body>
+
+</html>
